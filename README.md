@@ -1,2 +1,2 @@
 # MdAll
-Covert to .Md
+Convert (almost) everything to .Md 
