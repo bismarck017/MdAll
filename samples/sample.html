@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample Document</title>
+</head>
+<body>
+    <h1>In-Browser HTML Converter Test</h1>
+    <p>This HTML page tests the <strong>Turndown</strong> conversion pipeline with <em>GFM</em> support.</p>
+    
+    <h2>Supported Features Table</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Format</th>
+                <th>Parser Engine</th>
+                <th>Standardizer</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>HTML</td>
+                <td>DOMParser</td>
+                <td>Turndown + GFM</td>
+            </tr>
+            <tr>
+                <td>DOCX</td>
+                <td>Mammoth.js</td>
+                <td>Turndown + GFM</td>
+            </tr>
+            <tr>
+                <td>PDF</td>
+                <td>PDF.js</td>
+                <td>Layout Reconstruction</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Code Example</h2>
+    <pre><code class="language-javascript">const convert = (doc) => Turndown.turndown(doc);</code></pre>
+
+    <blockquote>
+        Privacy Note: All conversions take place in client memory without external network calls.
+    </blockquote>
+</body>
+</html>

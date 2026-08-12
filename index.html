@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doc2MD - In-Browser Document to Markdown Converter</title>
+    <meta name="description" content="100% Client-Side document converter for TXT, JSON, HTML, DOCX, and PDF to Markdown with live preview and batch ZIP export.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Highlight.js Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Vendor Libraries (Browser CDNs) -->
+    <!-- Turndown HTML -> Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.js"></script>
+    <!-- Mammoth DOCX -> HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+    <!-- PDF.js PDF text layer extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Marked MD -> HTML Render -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <!-- Highlight.js Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Main Workspace Area -->
+        <main class="workspace">
+            <!-- Left Side Panel: Floating Card with Dropzone, Queue & Footer Controls -->
+            <section class="panel panel-left">
+
+                <!-- Drop Zone -->
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="fileInput" multiple accept=".txt,.json,.html,.htm,.pdf,.docx" hidden>
+                    <div class="dropzone-content">
+                        <div class="upload-icon-wrapper">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                                <path d="M12 12v9"></path>
+                                <path d="m16 16-4-4-4 4"></path>
+                            </svg>
+                        </div>
+                        <h3>Drag & Drop Documents</h3>
+                        <p class="dropzone-subtitle">Or <span class="browse-link">browse files</span></p>
+                        <div class="supported-formats">
+                            <span class="fmt-tag tag-txt">.TXT</span>
+                            <span class="fmt-tag tag-json">.JSON</span>
+                            <span class="fmt-tag tag-html">.HTML</span>
+                            <span class="fmt-tag tag-docx">.DOCX</span>
+                            <span class="fmt-tag tag-pdf">.PDF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Queue Controls & List -->
+                <div class="queue-container">
+                    <div class="queue-header">
+                        <h2>File Queue (<span id="queueCount">0</span>)</h2>
+                        <div class="queue-actions">
+                            <button id="btnConvertAll" class="btn-primary-convert" disabled title="Convert all queued files to Markdown">
+                                <span>Convert All</span>
+                            </button>
+                            <button id="btnClearAll" class="btn-text btn-danger" disabled>Clear All</button>
+                        </div>
+                    </div>
+
+                    <!-- Client-Side Serverless Notice -->
+                    <div class="client-side-notice">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>100% In-Browser Conversion (No Server Uploads)</span>
+                    </div>
+
+                    <!-- Search / Filter Queue -->
+                    <div class="queue-search">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="queueSearchInput" placeholder="Filter files...">
+                    </div>
+
+                    <!-- File List Scroll Area -->
+                    <div class="queue-list" id="queueList">
+                        <div class="empty-state" id="emptyState">
+                            <p>No documents uploaded yet.</p>
+                            <p class="sub">Drag files above to convert immediately.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Footer: Stats & Settings -->
+                <div class="panel-footer-actions">
+                    <div class="stats-summary" id="statsSummary">
+                        <span id="statCount">0 files</span>
+                        <span class="divider">•</span>
+                        <span id="statSize">0 KB total</span>
+                    </div>
+                    
+                    <div class="panel-footer-buttons">
+                        <button id="btnSettings" class="btn btn-secondary" title="Conversion Settings">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            <span>Settings</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side Panel: Live Preview & Editor -->
+            <section class="panel panel-right">
+                <!-- Viewer Header Tabs (Transparent Background, No Line Divider) -->
+                <div class="viewer-header">
+                    <div class="tab-group">
+                        <button id="tabPreview" class="tab-btn active" data-tab="preview">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <span>Live Preview</span>
+                        </button>
+                        <button id="tabEditor" class="tab-btn" data-tab="editor">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                            <span>Raw Markdown</span>
+                        </button>
+                    </div>
+
+                    <div class="viewer-actions" id="viewerActions">
+                        <span class="active-file-title" id="activeFileTitle">Select a file from queue</span>
+                        
+                        <button id="btnCopyMd" class="btn btn-secondary btn-icon" disabled title="Copy Markdown to Clipboard">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span class="btn-text-content">Copy</span>
+                        </button>
+
+                        <button id="btnDownloadSingle" class="btn btn-secondary btn-icon" disabled title="Download .md file">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span class="btn-text-content">Download .md</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Viewer Content Container -->
+                <div class="viewer-content">
+                    <!-- Live Preview Container -->
+                    <div id="previewContainer" class="tab-content active">
+                        <div class="markdown-body" id="markdownPreview">
+                            <div class="viewer-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <p>Select a converted file to view live formatted preview</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Raw Editor Container -->
+                    <div id="editorContainer" class="tab-content">
+                        <div class="editor-wrapper">
+                            <textarea id="rawMarkdownTextarea" placeholder="Markdown code will appear here..." spellcheck="false"></textarea>
+                            <div class="editor-statusbar">
+                                <span id="editorWordCount">0 words</span>
+                                <span class="divider">•</span>
+                                <span id="editorCharCount">0 characters</span>
+                                <span class="divider">•</span>
+                                <span id="editorLineCount">0 lines</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-backdrop" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Conversion Settings</h3>
+                <button class="modal-close" id="btnCloseSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="settingHeadingStyle">Heading Style</label>
+                    <select id="settingHeadingStyle" class="select-input">
+                        <option value="atx" selected>ATX (# Heading)</option>
+                        <option value="setext">Setext (Underlined Heading)</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="settingBulletMarker">Bullet List Marker</label>
+                    <select id="settingBulletMarker" class="select-input">
+                        <option value="-" selected>- (Dash)</option>
+                        <option value="*">* (Asterisk)</option>
+                        <option value="+">+ (Plus)</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="settingCodeBlockStyle">Code Block Style</label>
+                    <select id="settingCodeBlockStyle" class="select-input">
+                        <option value="fenced" selected>Fenced (```)</option>
+                        <option value="indented">Indented (4 Spaces)</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="settingJsonFormat">JSON Conversion Style</label>
+                    <select id="settingJsonFormat" class="select-input">
+                        <option value="auto" selected>Auto (Table for Arrays, Headings for Objects)</option>
+                        <option value="codeblock">Raw JSON Fenced Code Block</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="settingPdfPageBreak">PDF Page Separation</label>
+                    <select id="settingPdfPageBreak" class="select-input">
+                        <option value="hr" selected>Horizontal Rule (--- Page X ---)</option>
+                        <option value="space">Double Line Break</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btnSaveSettings">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Modules -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

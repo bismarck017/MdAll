@@ -1,0 +1,11 @@
+Document to Markdown Conversion Test
+This is a sample plain text document created to test the .txt conversion engine.
+
+Features of Doc2MD:
+- 100% In-browser conversion with total privacy.
+- Support for TXT, JSON, HTML, DOCX, and PDF.
+- Split-screen live preview and raw code editor.
+- Batch export to ZIP archive.
+
+Conclusion:
+Plain text files are automatically cleaned and structured into clean Markdown paragraphs.

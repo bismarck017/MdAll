@@ -1,0 +1,30 @@
+[
+  {
+    "ID": 101,
+    "Document": "Technical Specification.docx",
+    "Format": "DOCX",
+    "Status": "Ready",
+    "Size_KB": 45.2
+  },
+  {
+    "ID": 102,
+    "Document": "User_Guide.html",
+    "Format": "HTML",
+    "Status": "Ready",
+    "Size_KB": 12.8
+  },
+  {
+    "ID": 103,
+    "Document": "Financial_Report.pdf",
+    "Format": "PDF",
+    "Status": "Ready",
+    "Size_KB": 128.0
+  },
+  {
+    "ID": 104,
+    "Document": "Config_Settings.json",
+    "Format": "JSON",
+    "Status": "Ready",
+    "Size_KB": 3.4
+  }
+]
