@@ -332,18 +332,6 @@ body {
     box-shadow: none;
 }
 
-.client-side-notice {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px dashed var(--border-color);
-    padding: 5px 8px;
-    border-radius: var(--radius-sm);
-}
-
 .btn-card-convert {
     font-size: 0.7rem;
     padding: 3px 8px;
